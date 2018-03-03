@@ -23,6 +23,16 @@ class Product {
       data: data
     })
   }
+  // 获取商品详情
+  getProduct(productId){
+    return _mm.request({
+      type : 'post',
+      url  : '/manage/product/detail.do',
+      data : {
+        productId: productId || 0
+      }
+    })
+  }
   // 变更商品销售状态
   setProductStatus(productInfo){
     return _mm.request({
@@ -52,7 +62,7 @@ class Product {
       }
     }
     // 品类ID
-    if (typeof product.categoryId !== 'number' || !(product.categoryId >= 0)) {
+    if (typeof product.categoryId !== 'number' || !(product.categoryId > 0)) {
       return {
         status: false,
         msg: '请选择商品品类！'

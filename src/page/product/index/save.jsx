@@ -14,15 +14,38 @@ class ProductSave extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
+      id : this.props.match.params.pid,
       name: '',
       subtitle: '',
-      categoryId: 0,
+      categoryId: '',
       parentCategoryId: 0,
       subImages: [],
       price: '',
       stock: '',
       detail: '',
       status: 1 //商品状态 1 在售
+    }
+  }
+  componentDidMount(){
+    this.loadProduct()
+  }
+  // 加载商品详情
+  loadProduct(){
+    // 有id的时候，表示是编辑功能，需要表单回填
+    if(this.state.id){
+      _product.getProduct(this.state.id).then((res) => {
+        let images = res.subImages.split(',')
+        res.subImages = images.map((imgUri) => {
+          return {
+            uri: imgUri,
+            url: res.imageHost + imgUri
+          }
+        })
+        res.defaultDetail = res.detail
+        this.setState(res)
+      }, (errMsg)=>{
+        _mm.errorTips(errMsg)
+      })
     }
   }
   // 简单字段的改变，比如商品名称 描述 价格
@@ -63,7 +86,6 @@ class ProductSave extends React.Component {
   }
   // 富文本编辑器的变化
   onDetailValueChange(value) {
-    console.log(value)
     this.setState({
       detail: value
     })
@@ -84,6 +106,9 @@ class ProductSave extends React.Component {
       status: this.state.status
     }
     let productCheckResult = _product.checkProduct(product)
+    if(this.state.id){
+      product.id = this.state.id
+    }
     if(productCheckResult.status){
       _product.saveProduct(product).then((res) => {
         _mm.successTips(res)
@@ -100,7 +125,7 @@ class ProductSave extends React.Component {
   render() {
     return (
       <div id="page-wrapper">
-        <PageTitle title="添加商品" />
+        <PageTitle title={this.state.id ? '编辑商品' : '添加商品'} />
         <div className="form-horizontal">
           <div className="form-group">
             <label className="col-sm-2 control-label">商品名称</label>
@@ -108,6 +133,7 @@ class ProductSave extends React.Component {
               <input type="text" className="form-control"
                 placeholder="请输入商品名称"
                 name="name"
+                value={this.state.name}
                 onChange={(e) => this.onValueChange(e)} />
             </div>
           </div>
@@ -117,12 +143,16 @@ class ProductSave extends React.Component {
               <input type="text" className="form-control"
                 placeholder="请输入商品描述"
                 name="subtitle"
+                value={this.state.subtitle}
                 onChange={(e) => this.onValueChange(e)} />
             </div>
           </div>
           <div className="form-group">
             <label className="col-md-2 control-label">所属分类</label>
-            <CategorySelector onCategoryChange={
+            <CategorySelector 
+              categoryId={this.state.categoryId}
+              parentCategoryId={this.state.parentCategoryId}
+              onCategoryChange={
               (categoryId, parentCategoryId) => this.onCategoryChange(categoryId, parentCategoryId)} />
           </div>
           <div className="form-group">
@@ -131,6 +161,7 @@ class ProductSave extends React.Component {
               <div className="input-group">
                 <input type="number" className="form-control"
                   name="price"
+                  value={this.state.price}
                   onChange={(e) => this.onValueChange(e)}
                   placeholder="0" />
                 <span className="input-group-addon">元</span>
@@ -143,6 +174,7 @@ class ProductSave extends React.Component {
               <div className="input-group">
                 <input type="number" className="form-control"
                   name="stock"
+                  value={this.state.stock}
                   onChange={(e) => this.onValueChange(e)}
                   placeholder="0" />
                 <span className="input-group-addon">件</span>
@@ -170,7 +202,10 @@ class ProductSave extends React.Component {
           <div className="form-group">
             <label className="col-md-2 control-label">商品详情</label>
             <div className="col-md-10">
-              <RichEditor onValueChange={(value) => this.onDetailValueChange(value)} />
+              <RichEditor
+                detail={this.state.detail} 
+                defaultDetail={this.state.defaultDetail} 
+                onValueChange={(value) => this.onDetailValueChange(value)} />
             </div>
           </div>
           <div className="form-group">
